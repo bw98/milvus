@@ -71,6 +71,18 @@ extern const char* CONFIG_STORAGE_AUTO_FLUSH_INTERVAL_DEFAULT;
 extern const char* CONFIG_STORAGE_FILE_CLEANUP_TIMEOUT;
 extern const int64_t CONFIG_STORAGE_FILE_CLEANUP_TIMEOUT_MIN;
 extern const int64_t CONFIG_STORAGE_FILE_CLEANUP_TIMEOUT_MAX;
+extern const char* CONFIG_STORAGE_S3_ENABLE;
+extern const char* CONFIG_STORAGE_S3_ENABLE_DEFAULT;
+extern const char* CONFIG_STORAGE_S3_ADDRESS;
+extern const char* CONFIG_STORAGE_S3_ADDRESS_DEFAULT;
+extern const char* CONFIG_STORAGE_S3_PORT;
+extern const char* CONFIG_STORAGE_S3_PORT_DEFAULT;
+extern const char* CONFIG_STORAGE_S3_ACCESS_KEY;
+extern const char* CONFIG_STORAGE_S3_ACCESS_KEY_DEFAULT;
+extern const char* CONFIG_STORAGE_S3_SECRET_KEY;
+extern const char* CONFIG_STORAGE_S3_SECRET_KEY_DEFAULT;
+extern const char* CONFIG_STORAGE_S3_BUCKET;
+extern const char* CONFIG_STORAGE_S3_BUCKET_DEFAULT;
 
 /* cache config */
 extern const char* CONFIG_CACHE;
@@ -240,6 +252,18 @@ class Config {
     CheckStorageConfigAutoFlushInterval(const std::string& value);
     Status
     CheckStorageConfigFileCleanupTimeout(const std::string& value);
+    Status
+    CheckStorageConfigS3Enable(const std::string& value);
+    Status
+    CheckStorageConfigS3Address(const std::string& value);
+    Status
+    CheckStorageConfigS3Port(const std::string& value);
+    Status
+    CheckStorageConfigS3AccessKey(const std::string& value);
+    Status
+    CheckStorageConfigS3SecretKey(const std::string& value);
+    Status
+    CheckStorageConfigS3Bucket(const std::string& value);
 
     /* metric config */
     Status
@@ -360,6 +384,18 @@ class Config {
     GetStorageConfigAutoFlushInterval(int64_t& value);
     Status
     GetStorageConfigFileCleanupTimeup(int64_t& value);
+    Status
+    GetStorageConfigS3Enable(bool& value);
+    Status
+    GetStorageConfigS3Address(std::string& value);
+    Status
+    GetStorageConfigS3Port(std::string& value);
+    Status
+    GetStorageConfigS3AccessKey(std::string& value);
+    Status
+    GetStorageConfigS3SecretKey(std::string& value);
+    Status
+    GetStorageConfigS3Bucket(std::string& value);
 
     /* metric config */
     Status
@@ -472,6 +508,18 @@ class Config {
     SetStorageConfigAutoFlushInterval(const std::string& value);
     Status
     SetStorageConfigFileCleanupTimeout(const std::string& value);
+    Status
+    SetStorageConfigS3Enable(const std::string& value);
+    Status
+    SetStorageConfigS3Address(const std::string& value);
+    Status
+    SetStorageConfigS3Port(const std::string& value);
+    Status
+    SetStorageConfigS3AccessKey(const std::string& value);
+    Status
+    SetStorageConfigS3SecretKey(const std::string& value);
+    Status
+    SetStorageConfigS3Bucket(const std::string& value);
 
     /* metric config */
     Status

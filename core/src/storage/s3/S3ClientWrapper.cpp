@@ -35,18 +35,24 @@ Status
 S3ClientWrapper::StartService() {
     server::Config& config = server::Config::GetInstance();
     bool s3_enable = false;
-    CONFIG_CHECK(config.GetStorageConfigS3Enable(s3_enable));
+    //CONFIG_CHECK(config.GetStorageConfigS3Enable(s3_enable));
+    STATUS_CHECK(config.GetStorageConfigS3Enable(s3_enable));
     fiu_do_on("S3ClientWrapper.StartService.s3_disable", s3_enable = false);
     if (!s3_enable) {
         LOG_STORAGE_INFO_ << "S3 not enabled!";
         return Status::OK();
     }
 
-    CONFIG_CHECK(config.GetStorageConfigS3Address(s3_address_));
-    CONFIG_CHECK(config.GetStorageConfigS3Port(s3_port_));
-    CONFIG_CHECK(config.GetStorageConfigS3AccessKey(s3_access_key_));
-    CONFIG_CHECK(config.GetStorageConfigS3SecretKey(s3_secret_key_));
-    CONFIG_CHECK(config.GetStorageConfigS3Bucket(s3_bucket_));
+    //CONFIG_CHECK(config.GetStorageConfigS3Address(s3_address_));
+    //CONFIG_CHECK(config.GetStorageConfigS3Port(s3_port_));
+    //CONFIG_CHECK(config.GetStorageConfigS3AccessKey(s3_access_key_));
+    //CONFIG_CHECK(config.GetStorageConfigS3SecretKey(s3_secret_key_));
+    //CONFIG_CHECK(config.GetStorageConfigS3Bucket(s3_bucket_));
+    STATUS_CHECK(config.GetStorageConfigS3Address(s3_address_));
+    STATUS_CHECK(config.GetStorageConfigS3Port(s3_port_));
+    STATUS_CHECK(config.GetStorageConfigS3AccessKey(s3_access_key_));
+    STATUS_CHECK(config.GetStorageConfigS3SecretKey(s3_secret_key_));
+    STATUS_CHECK(config.GetStorageConfigS3Bucket(s3_bucket_));
 
     Aws::InitAPI(options_);
 

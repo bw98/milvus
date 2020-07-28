@@ -19,11 +19,14 @@
 namespace {
 
 static const char* CONFIG_STR =
-    "storage_config:\n"
-    "  primary_path: /tmp/milvus\n"
-    "  secondary_path:\n"
+    "storage:\n"
+    "  path: /tmp/milvus\n"
+    //"storage_config:\n"
+    //"  primary_path: /tmp/milvus\n"
+    //"  secondary_path:\n"
     "  s3_enable: true\n"
-    "  s3_address: 127.0.0.1\n"
+    //"  s3_address: 127.0.0.1\n"
+    "  s3_address: 172.17.0.2\n"
     "  s3_port: 9000\n"
     "  s3_access_key: minioadmin\n"
     "  s3_secret_key: minioadmin\n"
