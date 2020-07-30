@@ -64,9 +64,29 @@ network:
 #                      | flushes data to disk.                                      |            |                 |
 #                      | 0 means disable the regular flush.                         |            |                 |
 #----------------------+------------------------------------------------------------+------------+-----------------+
+# s3_enable            | if planning to enable Milvus to save data in an object     | Boolean    | false           |
+#                      | storage which supports S3, set true, otherwise false.      |            |                 |
+#----------------------+------------------------------------------------------------+------------+-----------------+
+# s3_address           | IP address of an object storage which supports S3.         | IP         | 127.0.0.1       |
+#----------------------+------------------------------------------------------------+------------+-----------------+
+# s3_port              | Port of an object storage which supports S3.               | Integer    | 9000            |
+#----------------------+------------------------------------------------------------+------------+-----------------+
+# s3_access_key        | Access key that Milvus uses it to access an object storage.| String     | minioadmin      |
+#----------------------+------------------------------------------------------------+------------+-----------------+
+# s3_secret_key        | Secret key that Milvus uses it to access an object storage.| String     | minioadmin      |
+#----------------------+------------------------------------------------------------+------------+-----------------+
+# s3_bucket            | Bucket that Milvus uses it to store objects in an object   | String     | milvus-bucket   |
+#                      | storage.                                                   |            |                 |
+#----------------------+------------------------------------------------------------+------------+-----------------+
 storage:
   path: @MILVUS_DB_PATH@
   auto_flush_interval: 1
+  s3_enable: true
+  s3_address: 172.17.0.1
+  s3_port: 9000
+  s3_access_key: minioadmin
+  s3_secret_key: minioadmin
+  s3_bucket: milvus-bucket
 
 #----------------------+------------------------------------------------------------+------------+-----------------+
 # WAL Config           | Description                                                | Type       | Default         |

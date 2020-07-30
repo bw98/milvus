@@ -48,11 +48,14 @@ void
 StorageTest::SetUp() {
     std::string config_path(CONFIG_PATH);
     milvus::server::CommonUtil::CreateDirectory(config_path);
-    config_path += CONFIG_FILE;
-    WriteToFile(config_path, CONFIG_STR);
+    //config_path += CONFIG_FILE;
+    //WriteToFile(config_path, CONFIG_STR);
 
     milvus::server::Config& config = milvus::server::Config::GetInstance();
-    ASSERT_TRUE(config.LoadConfigFile(config_path).ok());
+    //ASSERT_TRUE(config.LoadConfigFile(config_path).ok());
+
+    std::string server_config_path("/home/milvus/core/conf/server_config.yaml");
+    ASSERT_TRUE(config.LoadConfigFile(server_config_path).ok());
 }
 
 void
