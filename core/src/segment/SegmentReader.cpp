@@ -24,15 +24,21 @@
 #include "storage/disk/DiskIOReader.h"
 #include "storage/disk/DiskIOWriter.h"
 #include "storage/disk/DiskOperation.h"
+#include "storage/s3/S3IOReader.h"
+#include "storage/s3/S3IOWriter.h"
+#include "storage/s3/S3Operation.h"
 #include "utils/Log.h"
 
 namespace milvus {
 namespace segment {
 
 SegmentReader::SegmentReader(const std::string& directory) {
-    storage::IOReaderPtr reader_ptr = std::make_shared<storage::DiskIOReader>();
-    storage::IOWriterPtr writer_ptr = std::make_shared<storage::DiskIOWriter>();
-    storage::OperationPtr operation_ptr = std::make_shared<storage::DiskOperation>(directory);
+    //storage::IOReaderPtr reader_ptr = std::make_shared<storage::DiskIOReader>();
+    //storage::IOWriterPtr writer_ptr = std::make_shared<storage::DiskIOWriter>();
+    //storage::OperationPtr operation_ptr = std::make_shared<storage::DiskOperation>(directory);
+    storage::IOReaderPtr reader_ptr = std::make_shared<storage::S3IOReader>();
+    storage::IOWriterPtr writer_ptr = std::make_shared<storage::S3IOWriter>();
+    storage::OperationPtr operation_ptr = std::make_shared<storage::S3Operation>(directory);
     fs_ptr_ = std::make_shared<storage::FSHandler>(reader_ptr, writer_ptr, operation_ptr);
     segment_ptr_ = std::make_shared<Segment>();
 }
