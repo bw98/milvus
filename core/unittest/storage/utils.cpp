@@ -21,12 +21,8 @@ namespace {
 static const char* CONFIG_STR =
     "storage:\n"
     "  path: /tmp/milvus\n"
-    //"storage_config:\n"
-    //"  primary_path: /tmp/milvus\n"
-    //"  secondary_path:\n"
     "  s3_enable: true\n"
-    //"  s3_address: 127.0.0.1\n"
-    "  s3_address: 172.17.0.2\n"
+    "  s3_address: 127.0.0.1\n"
     "  s3_port: 9000\n"
     "  s3_access_key: minioadmin\n"
     "  s3_secret_key: minioadmin\n"
@@ -48,14 +44,11 @@ void
 StorageTest::SetUp() {
     std::string config_path(CONFIG_PATH);
     milvus::server::CommonUtil::CreateDirectory(config_path);
-    //config_path += CONFIG_FILE;
-    //WriteToFile(config_path, CONFIG_STR);
+    config_path += CONFIG_FILE;
+    WriteToFile(config_path, CONFIG_STR);
 
     milvus::server::Config& config = milvus::server::Config::GetInstance();
-    //ASSERT_TRUE(config.LoadConfigFile(config_path).ok());
-
-    std::string server_config_path("/home/milvus/core/conf/server_config.yaml");
-    ASSERT_TRUE(config.LoadConfigFile(server_config_path).ok());
+    ASSERT_TRUE(config.LoadConfigFile(config_path).ok());
 }
 
 void

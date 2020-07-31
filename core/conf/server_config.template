@@ -81,8 +81,8 @@ network:
 storage:
   path: @MILVUS_DB_PATH@
   auto_flush_interval: 1
-  s3_enable: true
-  s3_address: 172.17.0.1
+  s3_enable: false
+  s3_address: 127.0.0.1
   s3_port: 9000
   s3_access_key: minioadmin
   s3_secret_key: minioadmin
