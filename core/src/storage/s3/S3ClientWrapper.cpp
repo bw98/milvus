@@ -250,6 +250,38 @@ S3ClientWrapper::ListObjects(std::vector<std::string>& object_list, const std::s
 }
 
 Status
+S3ClientWrapper::ListObjectsByPrefix(std::vector<std::string>& object_list, const std::string& prefix) {
+    Aws::S3::Model::ListObjectsRequest request;
+    request.WithBucket(s3_bucket_);
+
+    if (!prefix.empty()) {
+        request.WithPrefix(prefix);
+    }
+
+    auto outcome = client_ptr_->ListObjects(request);
+
+    if (!outcome.IsSuccess()) {
+        auto err = outcome.GetError();
+        LOG_STORAGE_ERROR_ << "ERROR: ListObjectsByPrefix: " << err.GetExceptionName() << ": " << err.GetMessage();
+        return Status(SERVER_UNEXPECTED_ERROR, err.GetMessage());
+    }
+
+    Aws::Vector<Aws::S3::Model::Object> result_list = outcome.GetResult().GetContents();
+
+    for (auto const& s3_object : result_list) {
+        object_list.push_back(s3_object.GetKey());
+    }
+
+    if (prefix.empty()) {
+        LOG_STORAGE_DEBUG_ << "ListObjects '" << s3_bucket_ << "' successfully!";
+    } else {
+        LOG_STORAGE_DEBUG_ << "ListObjects '" << s3_bucket_ << ":" << prefix << "' successfully!";
+    }
+
+    return Status::OK();
+}
+
+Status
 S3ClientWrapper::DeleteObject(const std::string& object_name) {
     Aws::S3::Model::DeleteObjectRequest request;
     request.WithBucket(s3_bucket_).WithKey(object_name);

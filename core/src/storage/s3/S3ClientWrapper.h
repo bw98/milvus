@@ -50,6 +50,8 @@ class S3ClientWrapper {
     Status
     ListObjects(std::vector<std::string>& object_list, const std::string& marker = "");
     Status
+    ListObjectsByPrefix(std::vector<std::string>& object_list, const std::string& prefix = "");
+    Status
     DeleteObject(const std::string& object_key);
     Status
     DeleteObjects(const std::string& marker);

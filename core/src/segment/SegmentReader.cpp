@@ -21,6 +21,7 @@
 
 #include "Vectors.h"
 #include "codecs/default/DefaultCodec.h"
+#include "config/Config.h"
 #include "storage/disk/DiskIOReader.h"
 #include "storage/disk/DiskIOWriter.h"
 #include "storage/disk/DiskOperation.h"
@@ -33,12 +34,22 @@ namespace milvus {
 namespace segment {
 
 SegmentReader::SegmentReader(const std::string& directory) {
-    //storage::IOReaderPtr reader_ptr = std::make_shared<storage::DiskIOReader>();
-    //storage::IOWriterPtr writer_ptr = std::make_shared<storage::DiskIOWriter>();
-    //storage::OperationPtr operation_ptr = std::make_shared<storage::DiskOperation>(directory);
-    storage::IOReaderPtr reader_ptr = std::make_shared<storage::S3IOReader>();
-    storage::IOWriterPtr writer_ptr = std::make_shared<storage::S3IOWriter>();
-    storage::OperationPtr operation_ptr = std::make_shared<storage::S3Operation>(directory);
+    server::Config& config = server::Config::GetInstance();
+    bool s3_enable = false;
+    config.GetStorageConfigS3Enable(s3_enable);
+    storage::IOReaderPtr reader_ptr;
+    storage::IOWriterPtr writer_ptr;
+    storage::OperationPtr operation_ptr;
+    if (!s3_enable) {
+        reader_ptr = std::make_shared<storage::DiskIOReader>();
+        writer_ptr = std::make_shared<storage::DiskIOWriter>();
+        operation_ptr = std::make_shared<storage::DiskOperation>(directory);
+    } else {
+        reader_ptr = std::make_shared<storage::S3IOReader>();
+        writer_ptr = std::make_shared<storage::S3IOWriter>();
+        operation_ptr = std::make_shared<storage::S3Operation>(directory);
+    }
+
     fs_ptr_ = std::make_shared<storage::FSHandler>(reader_ptr, writer_ptr, operation_ptr);
     segment_ptr_ = std::make_shared<Segment>();
 }

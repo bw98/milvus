@@ -39,23 +39,31 @@ S3Operation::GetDirectory() const {
 
 void
 S3Operation::ListDirectory(std::vector<std::string>& file_paths) {
-    auto status = S3ClientWrapper::GetInstance().ListObjects(file_paths);
+    //auto status = S3ClientWrapper::GetInstance().ListObjects(file_paths);
+    //if (!status.ok()) {
+    //    std::string err_msg = "Failed to list S3 directory: " + dir_path_;
+    //    LOG_ENGINE_ERROR_ << err_msg;
+    //    //throw Exception(SERVER_CANNOT_LIST_S3_FOLDER, err_msg);
+    //}
+
+    //// regard dir_path_ as prefix, and get paths of files which have the prefix
+    //std::vector<std::string> dir_file_paths;
+    //for (auto file_path : file_paths) {
+    //    if (file_path.size() >= dir_path_.size() &&
+    //        file_path.substr(0, dir_path_.size()).compare(dir_path_) == 0) {
+    //        dir_file_paths.push_back(file_path);
+    //    }
+    //}
+
+    //file_paths.swap(dir_file_paths);
+
+    // regard dir_path_ as prefix, and get paths of files which have the prefix
+    auto status = S3ClientWrapper::GetInstance().ListObjectsByPrefix(file_paths, dir_path_);
     if (!status.ok()) {
         std::string err_msg = "Failed to list S3 directory: " + dir_path_;
         LOG_ENGINE_ERROR_ << err_msg;
         //throw Exception(SERVER_CANNOT_LIST_S3_FOLDER, err_msg);
     }
-
-    // regard dir_path_ as prefix, and get paths of files which have the prefix
-    std::vector<std::string> dir_file_paths;
-    for (auto file_path : file_paths) {
-        if (file_path.size() >= dir_path_.size() &&
-            file_path.substr(0, dir_path_.size()).compare(dir_path_) == 0) {
-            dir_file_paths.push_back(file_path);
-        }
-    }
-
-    file_paths.swap(dir_file_paths);
 }
 
 bool
