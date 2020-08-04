@@ -1,5 +1,6 @@
 // Licensed to the Apache Software Foundation (ASF) under one
 // or more contributor license agreements.  See the NOTICE file
+// under the License.
 // distributed with this work for additional information
 // regarding copyright ownership.  The ASF licenses this file
 // to you under the Apache License, Version 2.0 (the
@@ -41,39 +42,124 @@ DefaultDeletedDocsFormat::read(const storage::FSHandlerPtr& fs_ptr, segment::Del
     std::string dir_path = fs_ptr->operation_ptr_->GetDirectory();
     const std::string del_file_path = dir_path + "/" + deleted_docs_filename_;
 
-    int del_fd = open(del_file_path.c_str(), O_RDONLY, 00664);
-    if (del_fd == -1) {
-        std::string err_msg = "Failed to open file: " + del_file_path + ", error: " + std::strerror(errno);
+    //int del_fd = open(del_file_path.c_str(), O_RDONLY, 00664);
+    //if (del_fd == -1) {
+    //    std::string err_msg = "Failed to open file: " + del_file_path + ", error: " + std::strerror(errno);
+    //    LOG_ENGINE_ERROR_ << err_msg;
+    //    throw Exception(SERVER_CANNOT_CREATE_FILE, err_msg);
+    //}
+    if (!fs_ptr->reader_ptr_->open(del_file_path)) {
+        std::string err_msg = "Fail to open file: " + del_file_path;
         LOG_ENGINE_ERROR_ << err_msg;
         throw Exception(SERVER_CANNOT_CREATE_FILE, err_msg);
     }
 
+    int64_t pos = 0;
+    fs_ptr->reader_ptr_->seekg(0);
+
+    //size_t num_bytes;
+    //if (::read(del_fd, &num_bytes, sizeof(size_t)) == -1) {
+    //    std::string err_msg = "Failed to read from file: " + del_file_path + ", error: " + std::strerror(errno);
+    //    LOG_ENGINE_ERROR_ << err_msg;
+    //    throw Exception(SERVER_WRITE_ERROR, err_msg);
+    //}
     size_t num_bytes;
-    if (::read(del_fd, &num_bytes, sizeof(size_t)) == -1) {
-        std::string err_msg = "Failed to read from file: " + del_file_path + ", error: " + std::strerror(errno);
-        LOG_ENGINE_ERROR_ << err_msg;
-        throw Exception(SERVER_WRITE_ERROR, err_msg);
-    }
+    fs_ptr->reader_ptr_->read(&num_bytes, sizeof(num_bytes));
+    pos += sizeof(num_bytes);
+    fs_ptr->reader_ptr_->seekg(pos);
 
     auto deleted_docs_size = num_bytes / sizeof(segment::offset_t);
     std::vector<segment::offset_t> deleted_docs_list;
     deleted_docs_list.resize(deleted_docs_size);
 
-    if (::read(del_fd, deleted_docs_list.data(), num_bytes) == -1) {
-        std::string err_msg = "Failed to read from file: " + del_file_path + ", error: " + std::strerror(errno);
-        LOG_ENGINE_ERROR_ << err_msg;
-        throw Exception(SERVER_WRITE_ERROR, err_msg);
-    }
+    //if (::read(del_fd, deleted_docs_list.data(), num_bytes) == -1) {
+    //    std::string err_msg = "Failed to read from file: " + del_file_path + ", error: " + std::strerror(errno);
+    //    LOG_ENGINE_ERROR_ << err_msg;
+    //    throw Exception(SERVER_WRITE_ERROR, err_msg);
+    //}
+    fs_ptr->reader_ptr_->read(deleted_docs_list.data(), num_bytes);
 
     deleted_docs = std::make_shared<segment::DeletedDocs>(deleted_docs_list);
 
-    if (::close(del_fd) == -1) {
-        std::string err_msg = "Failed to close file: " + del_file_path + ", error: " + std::strerror(errno);
-        LOG_ENGINE_ERROR_ << err_msg;
-        throw Exception(SERVER_WRITE_ERROR, err_msg);
-    }
+    //if (::close(del_fd) == -1) {
+    //    std::string err_msg = "Failed to close file: " + del_file_path + ", error: " + std::strerror(errno);
+    //    LOG_ENGINE_ERROR_ << err_msg;
+    //    throw Exception(SERVER_WRITE_ERROR, err_msg);
+    //}
+    fs_ptr->reader_ptr_->close();
 }
 
+//void
+//DefaultDeletedDocsFormat::write(const storage::FSHandlerPtr& fs_ptr, const segment::DeletedDocsPtr& deleted_docs) {
+//    const std::lock_guard<std::mutex> lock(mutex_);
+//
+//    std::string dir_path = fs_ptr->operation_ptr_->GetDirectory();
+//    const std::string del_file_path = dir_path + "/" + deleted_docs_filename_;
+//
+//    // Create a temporary file from the existing file
+//    const std::string temp_path = dir_path + "/" + "temp_del";
+//    bool exists = boost::filesystem::exists(del_file_path);
+//    if (exists) {
+//        boost::filesystem::copy_file(del_file_path, temp_path, boost::filesystem::copy_option::fail_if_exists);
+//    }
+//
+//    // Write to the temp file, in order to avoid possible race condition with search (concurrent read and write)
+//    int del_fd = open(temp_path.c_str(), O_RDWR | O_CREAT, 00664);
+//    if (del_fd == -1) {
+//        std::string err_msg = "Failed to open file: " + temp_path + ", error: " + std::strerror(errno);
+//        LOG_ENGINE_ERROR_ << err_msg;
+//        throw Exception(SERVER_CANNOT_CREATE_FILE, err_msg);
+//    }
+//
+//    size_t old_num_bytes;
+//    if (exists) {
+//        if (::read(del_fd, &old_num_bytes, sizeof(size_t)) == -1) {
+//            std::string err_msg = "Failed to read from file: " + temp_path + ", error: " + std::strerror(errno);
+//            LOG_ENGINE_ERROR_ << err_msg;
+//            throw Exception(SERVER_WRITE_ERROR, err_msg);
+//        }
+//    } else {
+//        old_num_bytes = 0;
+//    }
+//
+//    auto deleted_docs_list = deleted_docs->GetDeletedDocs();
+//    size_t new_num_bytes = old_num_bytes + sizeof(segment::offset_t) * deleted_docs->GetSize();
+//
+//    // rewind and overwrite with the new_num_bytes
+//    int off = lseek(del_fd, 0, SEEK_SET);
+//    if (off == -1) {
+//        std::string err_msg = "Failed to seek file: " + temp_path + ", error: " + std::strerror(errno);
+//        LOG_ENGINE_ERROR_ << err_msg;
+//        throw Exception(SERVER_WRITE_ERROR, err_msg);
+//    }
+//    if (::write(del_fd, &new_num_bytes, sizeof(size_t)) == -1) {
+//        std::string err_msg = "Failed to write to file" + temp_path + ", error: " + std::strerror(errno);
+//        LOG_ENGINE_ERROR_ << err_msg;
+//        throw Exception(SERVER_WRITE_ERROR, err_msg);
+//    }
+//
+//    // Move to the end of file and append
+//    off = lseek(del_fd, 0, SEEK_END);
+//    if (off == -1) {
+//        std::string err_msg = "Failed to seek file: " + temp_path + ", error: " + std::strerror(errno);
+//        LOG_ENGINE_ERROR_ << err_msg;
+//        throw Exception(SERVER_WRITE_ERROR, err_msg);
+//    }
+//    if (::write(del_fd, deleted_docs_list.data(), sizeof(segment::offset_t) * deleted_docs->GetSize()) == -1) {
+//        std::string err_msg = "Failed to write to file" + temp_path + ", error: " + std::strerror(errno);
+//        LOG_ENGINE_ERROR_ << err_msg;
+//        throw Exception(SERVER_WRITE_ERROR, err_msg);
+//    }
+//
+//    if (::close(del_fd) == -1) {
+//        std::string err_msg = "Failed to close file: " + temp_path + ", error: " + std::strerror(errno);
+//        LOG_ENGINE_ERROR_ << err_msg;
+//        throw Exception(SERVER_WRITE_ERROR, err_msg);
+//    }
+//
+//    // Move temp file to delete file
+//    boost::filesystem::rename(temp_path, del_file_path);
+//}
 void
 DefaultDeletedDocsFormat::write(const storage::FSHandlerPtr& fs_ptr, const segment::DeletedDocsPtr& deleted_docs) {
     const std::lock_guard<std::mutex> lock(mutex_);
@@ -81,69 +167,49 @@ DefaultDeletedDocsFormat::write(const storage::FSHandlerPtr& fs_ptr, const segme
     std::string dir_path = fs_ptr->operation_ptr_->GetDirectory();
     const std::string del_file_path = dir_path + "/" + deleted_docs_filename_;
 
-    // Create a temporary file from the existing file
-    const std::string temp_path = dir_path + "/" + "temp_del";
-    bool exists = boost::filesystem::exists(del_file_path);
-    if (exists) {
-        boost::filesystem::copy_file(del_file_path, temp_path, boost::filesystem::copy_option::fail_if_exists);
-    }
-
-    // Write to the temp file, in order to avoid possible race condition with search (concurrent read and write)
-    int del_fd = open(temp_path.c_str(), O_RDWR | O_CREAT, 00664);
-    if (del_fd == -1) {
-        std::string err_msg = "Failed to open file: " + temp_path + ", error: " + std::strerror(errno);
-        LOG_ENGINE_ERROR_ << err_msg;
-        throw Exception(SERVER_CANNOT_CREATE_FILE, err_msg);
-    }
-
+    bool old_del_file_exist = false;
     size_t old_num_bytes;
-    if (exists) {
-        if (::read(del_fd, &old_num_bytes, sizeof(size_t)) == -1) {
-            std::string err_msg = "Failed to read from file: " + temp_path + ", error: " + std::strerror(errno);
-            LOG_ENGINE_ERROR_ << err_msg;
-            throw Exception(SERVER_WRITE_ERROR, err_msg);
-        }
-    } else {
-        old_num_bytes = 0;
+    std::vector<segment::offset_t> old_deleted_docs_list;
+
+    if (fs_ptr->reader_ptr_->open(del_file_path)) {
+        old_del_file_exist = true;
+        int64_t pos = 0;
+        fs_ptr->reader_ptr_->seekg(0);
+
+        fs_ptr->reader_ptr_->read(&old_num_bytes, sizeof(old_num_bytes));
+        pos += sizeof(old_num_bytes);
+        fs_ptr->reader_ptr_->seekg(pos);
+
+        auto old_deleted_docs_size = old_num_bytes / sizeof(segment::offset_t);
+        old_deleted_docs_list.resize(old_deleted_docs_size);
+        fs_ptr->reader_ptr_->read(old_deleted_docs_list.data(), old_num_bytes);
+
+        fs_ptr->reader_ptr_->close();
+
+        fs_ptr->operation_ptr_->DeleteFile(del_file_path);  // remove old del_file
+    }
+
+    if (!fs_ptr->writer_ptr_->open(del_file_path)) {
+        std::string err_msg = "Fail to open file: " + del_file_path;
+        LOG_ENGINE_ERROR_ << err_msg;
+        throw Exception(SERVER_WRITE_ERROR, err_msg);
     }
 
     auto deleted_docs_list = deleted_docs->GetDeletedDocs();
-    size_t new_num_bytes = old_num_bytes + sizeof(segment::offset_t) * deleted_docs->GetSize();
+    size_t new_num_bytes;
 
-    // rewind and overwrite with the new_num_bytes
-    int off = lseek(del_fd, 0, SEEK_SET);
-    if (off == -1) {
-        std::string err_msg = "Failed to seek file: " + temp_path + ", error: " + std::strerror(errno);
-        LOG_ENGINE_ERROR_ << err_msg;
-        throw Exception(SERVER_WRITE_ERROR, err_msg);
-    }
-    if (::write(del_fd, &new_num_bytes, sizeof(size_t)) == -1) {
-        std::string err_msg = "Failed to write to file" + temp_path + ", error: " + std::strerror(errno);
-        LOG_ENGINE_ERROR_ << err_msg;
-        throw Exception(SERVER_WRITE_ERROR, err_msg);
+    if (old_del_file_exist) {
+        new_num_bytes = old_num_bytes + sizeof(segment::offset_t) * deleted_docs->GetSize();
+        fs_ptr->writer_ptr_->write(&new_num_bytes, sizeof(size_t));
+        fs_ptr->writer_ptr_->write(old_deleted_docs_list.data(), old_num_bytes);
+    } else {
+        new_num_bytes = sizeof(segment::offset_t) * deleted_docs->GetSize();
+        fs_ptr->writer_ptr_->write(&new_num_bytes, sizeof(size_t));
     }
 
-    // Move to the end of file and append
-    off = lseek(del_fd, 0, SEEK_END);
-    if (off == -1) {
-        std::string err_msg = "Failed to seek file: " + temp_path + ", error: " + std::strerror(errno);
-        LOG_ENGINE_ERROR_ << err_msg;
-        throw Exception(SERVER_WRITE_ERROR, err_msg);
-    }
-    if (::write(del_fd, deleted_docs_list.data(), sizeof(segment::offset_t) * deleted_docs->GetSize()) == -1) {
-        std::string err_msg = "Failed to write to file" + temp_path + ", error: " + std::strerror(errno);
-        LOG_ENGINE_ERROR_ << err_msg;
-        throw Exception(SERVER_WRITE_ERROR, err_msg);
-    }
+    fs_ptr->writer_ptr_->write(deleted_docs_list.data(), sizeof(segment::offset_t) * deleted_docs->GetSize());
 
-    if (::close(del_fd) == -1) {
-        std::string err_msg = "Failed to close file: " + temp_path + ", error: " + std::strerror(errno);
-        LOG_ENGINE_ERROR_ << err_msg;
-        throw Exception(SERVER_WRITE_ERROR, err_msg);
-    }
-
-    // Move temp file to delete file
-    boost::filesystem::rename(temp_path, del_file_path);
+    fs_ptr->writer_ptr_->close();
 }
 
 void
@@ -153,27 +219,37 @@ DefaultDeletedDocsFormat::readSize(const storage::FSHandlerPtr& fs_ptr, size_t& 
     std::string dir_path = fs_ptr->operation_ptr_->GetDirectory();
     const std::string del_file_path = dir_path + "/" + deleted_docs_filename_;
 
-    int del_fd = open(del_file_path.c_str(), O_RDONLY, 00664);
-    if (del_fd == -1) {
-        std::string err_msg = "Failed to open file: " + del_file_path + ", error: " + std::strerror(errno);
+    //int del_fd = open(del_file_path.c_str(), O_RDONLY, 00664);
+    //if (del_fd == -1) {
+    //    std::string err_msg = "Failed to open file: " + del_file_path + ", error: " + std::strerror(errno);
+    //    LOG_ENGINE_ERROR_ << err_msg;
+    //    throw Exception(SERVER_CANNOT_CREATE_FILE, err_msg);
+    //}
+    if (!fs_ptr->reader_ptr_->open(del_file_path)) {
+        std::string err_msg = "Fail to open file: " + del_file_path;
         LOG_ENGINE_ERROR_ << err_msg;
         throw Exception(SERVER_CANNOT_CREATE_FILE, err_msg);
     }
 
+    fs_ptr->reader_ptr_->seekg(0);
+
+    //size_t num_bytes;
+    //if (::read(del_fd, &num_bytes, sizeof(size_t)) == -1) {
+    //    std::string err_msg = "Failed to read from file: " + del_file_path + ", error: " + std::strerror(errno);
+    //    LOG_ENGINE_ERROR_ << err_msg;
+    //    throw Exception(SERVER_WRITE_ERROR, err_msg);
+    //}
     size_t num_bytes;
-    if (::read(del_fd, &num_bytes, sizeof(size_t)) == -1) {
-        std::string err_msg = "Failed to read from file: " + del_file_path + ", error: " + std::strerror(errno);
-        LOG_ENGINE_ERROR_ << err_msg;
-        throw Exception(SERVER_WRITE_ERROR, err_msg);
-    }
+    fs_ptr->reader_ptr_->read(&num_bytes, sizeof(num_bytes));
 
     size = num_bytes / sizeof(segment::offset_t);
 
-    if (::close(del_fd) == -1) {
-        std::string err_msg = "Failed to close file: " + del_file_path + ", error: " + std::strerror(errno);
-        LOG_ENGINE_ERROR_ << err_msg;
-        throw Exception(SERVER_WRITE_ERROR, err_msg);
-    }
+    //if (::close(del_fd) == -1) {
+    //    std::string err_msg = "Failed to close file: " + del_file_path + ", error: " + std::strerror(errno);
+    //    LOG_ENGINE_ERROR_ << err_msg;
+    //    throw Exception(SERVER_WRITE_ERROR, err_msg);
+    //}
+    fs_ptr->reader_ptr_->close();
 }
 
 }  // namespace codec
