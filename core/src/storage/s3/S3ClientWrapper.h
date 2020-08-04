@@ -47,10 +47,10 @@ class S3ClientWrapper {
     GetObjectFile(const std::string& object_key, const std::string& file_path);
     Status
     GetObjectStr(const std::string& object_key, std::string& content);
+    //Status
+    //ListObjects(std::vector<std::string>& object_list, const std::string& marker = "");
     Status
-    ListObjects(std::vector<std::string>& object_list, const std::string& marker = "");
-    Status
-    ListObjectsByPrefix(std::vector<std::string>& object_list, const std::string& prefix = "");
+    ListObjects(std::vector<std::string>& object_list, const std::string& prefix = "");
     Status
     DeleteObject(const std::string& object_key);
     Status

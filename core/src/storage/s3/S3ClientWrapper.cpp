@@ -217,40 +217,40 @@ S3ClientWrapper::GetObjectStr(const std::string& object_name, std::string& conte
     return Status::OK();
 }
 
+//Status
+//S3ClientWrapper::ListObjects(std::vector<std::string>& object_list, const std::string& marker) {
+//    Aws::S3::Model::ListObjectsRequest request;
+//    request.WithBucket(s3_bucket_);
+//
+//    if (!marker.empty()) {
+//        request.WithMarker(marker);
+//    }
+//
+//    auto outcome = client_ptr_->ListObjects(request);
+//
+//    fiu_do_on("S3ClientWrapper.ListObjects.outcome.fail", outcome = Aws::S3::Model::ListObjectsOutcome());
+//    if (!outcome.IsSuccess()) {
+//        auto err = outcome.GetError();
+//        LOG_STORAGE_ERROR_ << "ERROR: ListObjects: " << err.GetExceptionName() << ": " << err.GetMessage();
+//        return Status(SERVER_UNEXPECTED_ERROR, err.GetMessage());
+//    }
+//
+//    Aws::Vector<Aws::S3::Model::Object> result_list = outcome.GetResult().GetContents();
+//
+//    for (auto const& s3_object : result_list) {
+//        object_list.push_back(s3_object.GetKey());
+//    }
+//
+//    if (marker.empty()) {
+//        LOG_STORAGE_DEBUG_ << "ListObjects '" << s3_bucket_ << "' successfully!";
+//    } else {
+//        LOG_STORAGE_DEBUG_ << "ListObjects '" << s3_bucket_ << ":" << marker << "' successfully!";
+//    }
+//    return Status::OK();
+//}
+
 Status
-S3ClientWrapper::ListObjects(std::vector<std::string>& object_list, const std::string& marker) {
-    Aws::S3::Model::ListObjectsRequest request;
-    request.WithBucket(s3_bucket_);
-
-    if (!marker.empty()) {
-        request.WithMarker(marker);
-    }
-
-    auto outcome = client_ptr_->ListObjects(request);
-
-    fiu_do_on("S3ClientWrapper.ListObjects.outcome.fail", outcome = Aws::S3::Model::ListObjectsOutcome());
-    if (!outcome.IsSuccess()) {
-        auto err = outcome.GetError();
-        LOG_STORAGE_ERROR_ << "ERROR: ListObjects: " << err.GetExceptionName() << ": " << err.GetMessage();
-        return Status(SERVER_UNEXPECTED_ERROR, err.GetMessage());
-    }
-
-    Aws::Vector<Aws::S3::Model::Object> result_list = outcome.GetResult().GetContents();
-
-    for (auto const& s3_object : result_list) {
-        object_list.push_back(s3_object.GetKey());
-    }
-
-    if (marker.empty()) {
-        LOG_STORAGE_DEBUG_ << "ListObjects '" << s3_bucket_ << "' successfully!";
-    } else {
-        LOG_STORAGE_DEBUG_ << "ListObjects '" << s3_bucket_ << ":" << marker << "' successfully!";
-    }
-    return Status::OK();
-}
-
-Status
-S3ClientWrapper::ListObjectsByPrefix(std::vector<std::string>& object_list, const std::string& prefix) {
+S3ClientWrapper::ListObjects(std::vector<std::string>& object_list, const std::string& prefix) {
     Aws::S3::Model::ListObjectsRequest request;
     request.WithBucket(s3_bucket_);
 
