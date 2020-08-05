@@ -75,27 +75,18 @@ void
 DefaultVectorsFormat::read(const storage::FSHandlerPtr& fs_ptr, segment::VectorsPtr& vectors_read) {
     const std::lock_guard<std::mutex> lock(mutex_);
 
-    std::string dir_path = fs_ptr->operation_ptr_->GetDirectory();
-    if (!boost::filesystem::is_directory(dir_path)) {
-        std::string err_msg = "Directory: " + dir_path + "does not exist";
-        LOG_ENGINE_ERROR_ << err_msg;
-        throw Exception(SERVER_INVALID_ARGUMENT, err_msg);
-    }
+    std::vector<std::string>& file_paths;
+    fs_ptr->operation_ptr_->ListDirectory(file_paths);
 
-    boost::filesystem::path target_path(dir_path);
-    typedef boost::filesystem::directory_iterator d_it;
-    d_it it_end;
-    d_it it(target_path);
-    //    for (auto& it : boost::filesystem::directory_iterator(dir_path)) {
-    for (; it != it_end; ++it) {
-        const auto& path = it->path();
-        if (path.extension().string() == raw_vector_extension_) {
+    for (auto& file_path : file_paths) {
+        std::string extension = file_path.sub_str(file_path.find_last_of('.'));
+        if (extension == raw_vector_extension_) {
             auto& vector_list = vectors_read->GetMutableData();
-            read_vectors_internal(fs_ptr, path.string(), 0, INT64_MAX, vector_list);
+            read_vectors_internal(fs_ptr, file_path, 0, INT64_MAX, vector_list);
             vectors_read->SetName(path.stem().string());
-        } else if (path.extension().string() == user_id_extension_) {
+        } else if (extension == user_id_extension_) {
             auto& uids = vectors_read->GetMutableUids();
-            read_uids_internal(fs_ptr, path.string(), uids);
+            read_uids_internal(fs_ptr, file_path, uids);
         }
     }
 }
@@ -141,22 +132,13 @@ void
 DefaultVectorsFormat::read_uids(const storage::FSHandlerPtr& fs_ptr, std::vector<segment::doc_id_t>& uids) {
     const std::lock_guard<std::mutex> lock(mutex_);
 
-    std::string dir_path = fs_ptr->operation_ptr_->GetDirectory();
-    if (!boost::filesystem::is_directory(dir_path)) {
-        std::string err_msg = "Directory: " + dir_path + "does not exist";
-        LOG_ENGINE_ERROR_ << err_msg;
-        throw Exception(SERVER_INVALID_ARGUMENT, err_msg);
-    }
+    std::vector<std::string>& file_paths;
+    fs_ptr->operation_ptr_->ListDirectory(file_paths);
 
-    boost::filesystem::path target_path(dir_path);
-    typedef boost::filesystem::directory_iterator d_it;
-    d_it it_end;
-    d_it it(target_path);
-    //    for (auto& it : boost::filesystem::directory_iterator(dir_path)) {
-    for (; it != it_end; ++it) {
-        const auto& path = it->path();
-        if (path.extension().string() == user_id_extension_) {
-            read_uids_internal(fs_ptr, path.string(), uids);
+    for (auto& file_path : file_paths) {
+        std::string extension = file_path.sub_str(file_path.find_last_of('.'));
+        if (extension == user_id_extension_) {
+            read_uids_internal(fs_ptr, file_path, uids);
         }
     }
 }
@@ -166,22 +148,13 @@ DefaultVectorsFormat::read_vectors(const storage::FSHandlerPtr& fs_ptr, off_t of
                                    std::vector<uint8_t>& raw_vectors) {
     const std::lock_guard<std::mutex> lock(mutex_);
 
-    std::string dir_path = fs_ptr->operation_ptr_->GetDirectory();
-    if (!boost::filesystem::is_directory(dir_path)) {
-        std::string err_msg = "Directory: " + dir_path + "does not exist";
-        LOG_ENGINE_ERROR_ << err_msg;
-        throw Exception(SERVER_INVALID_ARGUMENT, err_msg);
-    }
+    std::vector<std::string>& file_paths;
+    fs_ptr->operation_ptr_->ListDirectory(file_paths);
 
-    boost::filesystem::path target_path(dir_path);
-    typedef boost::filesystem::directory_iterator d_it;
-    d_it it_end;
-    d_it it(target_path);
-    //    for (auto& it : boost::filesystem::directory_iterator(dir_path)) {
-    for (; it != it_end; ++it) {
-        const auto& path = it->path();
-        if (path.extension().string() == raw_vector_extension_) {
-            read_vectors_internal(fs_ptr, path.string(), offset, num_bytes, raw_vectors);
+    for (auto& file_path : file_paths) {
+        std::string extension = file_path.sub_str(file_path.find_last_of('.'));
+        if (extension == raw_vector_extension_) {
+            read_vectors_internal(fs_ptr, file_path, offset, num_bytes, raw_vectors);
         }
     }
 }
