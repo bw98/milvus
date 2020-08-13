@@ -39,7 +39,7 @@ class Operation {
     DeleteFile(const std::string& file_path) = 0;
 
     virtual bool
-    MoveFile(const std::string& old_file_path, const std::string& dest_file_path) = 0;
+    Move(const std::string& tar_name, const std::string& src_name) = 0;
 
     // TODO(zhiru):
     //  open(), sync(), close()

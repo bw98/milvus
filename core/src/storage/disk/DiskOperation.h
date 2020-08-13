@@ -43,7 +43,7 @@ class DiskOperation : public Operation {
     DeleteFile(const std::string& file_path);
 
     bool
-    MoveFile(const std::string& old_file_path, const std::string& dest_file_path) override;
+    Move(const std::string& tar_name, const std::string& src_name) override;
 
     // TODO(zhiru):
     //  open(), sync(), close()

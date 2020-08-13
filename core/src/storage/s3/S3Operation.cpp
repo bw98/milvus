@@ -54,8 +54,8 @@ S3Operation::DeleteFile(const std::string& file_path) {
 }
 
 bool
-S3Operation::MoveFile(const std::string& old_file_path, const std::string& dest_file_path) {
-    return (S3ClientWrapper::GetInstance().MoveObject(old_file_path, dest_file_path).ok());
+S3Operation::Move(const std::string& tar_name, const std::string& src_name) {
+    return (S3ClientWrapper::GetInstance().Move(tar_name, src_name).ok());
 }
 
 }  // namespace storage

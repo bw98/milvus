@@ -68,7 +68,7 @@ DiskOperation::DeleteFile(const std::string& file_path) {
 }
 
 bool
-DiskOperation::MoveFile(const std::string& old_file_path, const std::string& dest_file_path) {
+DiskOperation::Move(const std::string& tar_name, const std::string& src_name) {
     // Need to realize...
     return false;
 }

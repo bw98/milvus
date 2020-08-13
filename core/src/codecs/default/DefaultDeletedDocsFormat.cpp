@@ -118,7 +118,7 @@ DefaultDeletedDocsFormat::write(const storage::FSHandlerPtr& fs_ptr, const segme
     fs_ptr->writer_ptr_->close();
 
     // Move temp file to delete_docs file
-    fs_ptr->operation_ptr_->MoveFile(temp_path, del_file_path);
+    fs_ptr->operation_ptr_->Move(del_file_path, temp_path);
 }
 
 void
