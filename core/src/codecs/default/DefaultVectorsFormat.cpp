@@ -75,15 +75,16 @@ void
 DefaultVectorsFormat::read(const storage::FSHandlerPtr& fs_ptr, segment::VectorsPtr& vectors_read) {
     const std::lock_guard<std::mutex> lock(mutex_);
 
-    std::vector<std::string>& file_paths;
+    std::vector<std::string> file_paths;
     fs_ptr->operation_ptr_->ListDirectory(file_paths);
 
     for (auto& file_path : file_paths) {
-        std::string extension = file_path.sub_str(file_path.find_last_of('.'));
+        std::string extension = file_path.substr(file_path.find_last_of('.'));
         if (extension == raw_vector_extension_) {
             auto& vector_list = vectors_read->GetMutableData();
             read_vectors_internal(fs_ptr, file_path, 0, INT64_MAX, vector_list);
-            vectors_read->SetName(path.stem().string());
+            std::string filename = file_path.substr(file_path.find_last_of('/') + 1);
+            vectors_read->SetName(filename.substr(0, filename.find_last_of('.')));
         } else if (extension == user_id_extension_) {
             auto& uids = vectors_read->GetMutableUids();
             read_uids_internal(fs_ptr, file_path, uids);
@@ -132,11 +133,11 @@ void
 DefaultVectorsFormat::read_uids(const storage::FSHandlerPtr& fs_ptr, std::vector<segment::doc_id_t>& uids) {
     const std::lock_guard<std::mutex> lock(mutex_);
 
-    std::vector<std::string>& file_paths;
+    std::vector<std::string> file_paths;
     fs_ptr->operation_ptr_->ListDirectory(file_paths);
 
     for (auto& file_path : file_paths) {
-        std::string extension = file_path.sub_str(file_path.find_last_of('.'));
+        std::string extension = file_path.substr(file_path.find_last_of('.'));
         if (extension == user_id_extension_) {
             read_uids_internal(fs_ptr, file_path, uids);
         }
@@ -148,11 +149,11 @@ DefaultVectorsFormat::read_vectors(const storage::FSHandlerPtr& fs_ptr, off_t of
                                    std::vector<uint8_t>& raw_vectors) {
     const std::lock_guard<std::mutex> lock(mutex_);
 
-    std::vector<std::string>& file_paths;
+    std::vector<std::string> file_paths;
     fs_ptr->operation_ptr_->ListDirectory(file_paths);
 
     for (auto& file_path : file_paths) {
-        std::string extension = file_path.sub_str(file_path.find_last_of('.'));
+        std::string extension = file_path.substr(file_path.find_last_of('.'));
         if (extension == raw_vector_extension_) {
             read_vectors_internal(fs_ptr, file_path, offset, num_bytes, raw_vectors);
         }
