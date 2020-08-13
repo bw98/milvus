@@ -41,6 +41,9 @@ class S3Operation : public Operation {
     bool
     DeleteFile(const std::string& file_path) override;
 
+    bool
+    MoveFile(const std::string& old_file_path, const std::string& dest_file_path) override;
+
  private:
     const std::string dir_path_;
 };

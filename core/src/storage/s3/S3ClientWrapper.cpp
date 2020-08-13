@@ -16,6 +16,8 @@
 #include <aws/s3/model/GetObjectRequest.h>
 #include <aws/s3/model/ListObjectsRequest.h>
 #include <aws/s3/model/PutObjectRequest.h>
+#include <aws/s3/model/HeadObjectRequest.h>
+#include <aws/s3/model/CopyObjectRequest.h>
 #include <fiu-local.h>
 #include <fstream>
 #include <iostream>
@@ -313,6 +315,61 @@ S3ClientWrapper::DeleteObjects(const std::string& marker) {
         if (!stat.ok()) {
             return stat;
         }
+    }
+
+    return Status::OK();
+}
+
+bool
+S3ClientWrapper::DoObjectExist(const std::string& object_name) {
+    Aws::S3::Model::HeadObjectRequest request;
+    request.WithBucket(s3_bucket_).WithKey(object_name);
+
+    auto outcome = client_ptr_->HeadObject(request);
+
+    if (!outcome.IsSuccess()) {
+        auto err = outcome.GetError();
+        LOG_STORAGE_ERROR_ << "ERROR: PutObject: " << err.GetExceptionName() << ": " << err.GetMessage();
+        //return Status(SERVER_UNEXPECTED_ERROR, err.GetMessage());
+        return false;
+    }
+
+    return true;
+}
+
+Status
+S3ClientWrapper::MoveObject(const std::string& old_object_name, const std::string& dest_object_name) {
+    if (old_object_name.empty() || dest_object_name.empty()) {
+        std::string err_msg = "ERROR: MoveObject: old_object_name and dest_object_name should not be empty";
+        LOG_STORAGE_ERROR_ << err_msg;
+        return Status(SERVER_UNEXPECTED_ERROR, err_msg);
+    }
+
+    // Delete the file that may already exist in the destination
+    if (DoObjectExist(dest_object_name)) {
+        auto status = DeleteObject(dest_object_name);
+        if (!status.ok()) {
+            return status;
+        }
+    }
+
+    // Copy the old object to destination, then remove the old object
+    Aws::S3::Model::CopyObjectRequest request;
+    std::string old_object_pos = (old_object_name.front() == '/') ? s3_bucket_ + old_object_name :
+                                                                  s3_bucket_ + "/" + old_object_name;
+    request.WithBucket(s3_bucket_).WithKey(dest_object_name).WithCopySource(old_object_pos);
+
+    auto outcome = client_ptr_->CopyObject(request);
+
+    if (!outcome.IsSuccess()) {
+        auto err = outcome.GetError();
+        LOG_STORAGE_ERROR_ << "ERROR: MoveObject: " << err.GetExceptionName() << ": " << err.GetMessage();
+        return Status(SERVER_UNEXPECTED_ERROR, err.GetMessage());
+    }
+
+    auto status = DeleteObject(old_object_name);
+    if (!status.ok()) {
+        return status;
     }
 
     return Status::OK();

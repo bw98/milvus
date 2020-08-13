@@ -73,6 +73,7 @@ DefaultDeletedDocsFormat::write(const storage::FSHandlerPtr& fs_ptr, const segme
 
     std::string dir_path = fs_ptr->operation_ptr_->GetDirectory();
     const std::string del_file_path = dir_path + "/" + deleted_docs_filename_;
+    const std::string temp_path = dir_path + "/" + "temp_del";
 
     bool old_del_file_exist = false;
     size_t old_num_bytes;
@@ -92,12 +93,10 @@ DefaultDeletedDocsFormat::write(const storage::FSHandlerPtr& fs_ptr, const segme
         fs_ptr->reader_ptr_->read(old_deleted_docs_list.data(), old_num_bytes);
 
         fs_ptr->reader_ptr_->close();
-
-        fs_ptr->operation_ptr_->DeleteFile(del_file_path);  // remove old del_file
     }
 
-    if (!fs_ptr->writer_ptr_->open(del_file_path)) {
-        std::string err_msg = "Fail to open file: " + del_file_path + ", error: " + std::strerror(errno);
+    if (!fs_ptr->writer_ptr_->open(temp_path)) {
+        std::string err_msg = "Fail to open file: " + temp_path + ", error: " + std::strerror(errno);
         LOG_ENGINE_ERROR_ << err_msg;
         throw Exception(SERVER_WRITE_ERROR, err_msg);
     }
@@ -117,6 +116,9 @@ DefaultDeletedDocsFormat::write(const storage::FSHandlerPtr& fs_ptr, const segme
     fs_ptr->writer_ptr_->write(deleted_docs_list.data(), sizeof(segment::offset_t) * deleted_docs->GetSize());
 
     fs_ptr->writer_ptr_->close();
+
+    // Move temp file to delete_docs file
+    fs_ptr->operation_ptr_->MoveFile(temp_path, del_file_path);
 }
 
 void

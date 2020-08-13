@@ -55,6 +55,10 @@ class S3ClientWrapper {
     DeleteObject(const std::string& object_key);
     Status
     DeleteObjects(const std::string& marker);
+    bool
+    DoObjectExist(const std::string& object_key);
+    Status
+    MoveObject(const std::string& old_object_key, const std::string& dest_object_key);
 
  private:
     std::shared_ptr<Aws::S3::S3Client> client_ptr_;

@@ -67,5 +67,11 @@ DiskOperation::DeleteFile(const std::string& file_path) {
     return boost::filesystem::remove(file_path);
 }
 
+bool
+DiskOperation::MoveFile(const std::string& old_file_path, const std::string& dest_file_path) {
+    // Need to realize...
+    return false;
+}
+
 }  // namespace storage
 }  // namespace milvus

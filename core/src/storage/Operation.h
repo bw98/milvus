@@ -38,6 +38,9 @@ class Operation {
     virtual bool
     DeleteFile(const std::string& file_path) = 0;
 
+    virtual bool
+    MoveFile(const std::string& old_file_path, const std::string& dest_file_path) = 0;
+
     // TODO(zhiru):
     //  open(), sync(), close()
     //  function that opens a stream for reading file

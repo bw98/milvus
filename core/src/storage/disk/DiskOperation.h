@@ -42,6 +42,9 @@ class DiskOperation : public Operation {
     bool
     DeleteFile(const std::string& file_path);
 
+    bool
+    MoveFile(const std::string& old_file_path, const std::string& dest_file_path) override;
+
     // TODO(zhiru):
     //  open(), sync(), close()
     //  function that opens a stream for reading file

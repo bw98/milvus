@@ -40,7 +40,7 @@ S3Operation::GetDirectory() const {
 void
 S3Operation::ListDirectory(std::vector<std::string>& file_paths) {
     // regard dir_path_ as prefix, and get paths of files which have the prefix
-    auto status = S3ClientWrapper::GetInstance().ListObjects(file_paths, dir_path_);
+    auto status = S3ClientWrapper::GetInstance().ListObjects(file_paths, dir_path_ + "/");
     if (!status.ok()) {
         std::string err_msg = "Failed to list S3 directory: " + dir_path_;
         LOG_ENGINE_ERROR_ << err_msg;
@@ -51,6 +51,11 @@ S3Operation::ListDirectory(std::vector<std::string>& file_paths) {
 bool
 S3Operation::DeleteFile(const std::string& file_path) {
     return (S3ClientWrapper::GetInstance().DeleteObject(file_path).ok());
+}
+
+bool
+S3Operation::MoveFile(const std::string& old_file_path, const std::string& dest_file_path) {
+    return (S3ClientWrapper::GetInstance().MoveObject(old_file_path, dest_file_path).ok());
 }
 
 }  // namespace storage
