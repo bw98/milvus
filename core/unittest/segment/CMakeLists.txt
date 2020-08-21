@@ -12,19 +12,29 @@
 #-------------------------------------------------------------------------------
 
 set(test_files
-        ${CMAKE_CURRENT_SOURCE_DIR}/test_segment_rw.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_segment_index.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_segment_deleteddocs.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/utils.cpp
         )
 
-include_directories("${CUDA_TOOLKIT_ROOT_DIR}/include")
-link_directories("${CUDA_TOOLKIT_ROOT_DIR}/lib64")
+#include_directories("${CUDA_TOOLKIT_ROOT_DIR}/include")
+#link_directories("${CUDA_TOOLKIT_ROOT_DIR}/lib64")
+
+include_directories(${MILVUS_ENGINE_SRC}/index)
+include_directories(${MILVUS_ENGINE_SRC}/index/unittest)
+
+set(index_util_files
+        ${MILVUS_ENGINE_SRC}/index/unittest/utils.cpp
+        )
 
 set(util_files
         ${MILVUS_THIRDPARTY_SRC}/easyloggingpp/easylogging++.cc
-        ${MILVUS_ENGINE_SRC}/utils/Status.cpp)
+        ${MILVUS_ENGINE_SRC}/utils/Status.cpp
+        )
 
 add_executable(test_segment
         ${test_files}
+        ${index_util_files}
         ${util_files}
         ${common_files}
         )
