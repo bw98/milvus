@@ -22,7 +22,7 @@ namespace {
 static const char* CONFIG_STR =
     "storage:\n"
     "  path: /tmp/milvus\n"
-    "  s3_enable: true\n"
+    "  s3_enable: false\n"
     "  s3_address: 127.0.0.1\n"
     "  s3_port: 9000\n"
     "  s3_access_key: minioadmin\n"

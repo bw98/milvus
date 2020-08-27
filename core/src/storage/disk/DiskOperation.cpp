@@ -69,8 +69,13 @@ DiskOperation::DeleteFile(const std::string& file_path) {
 
 bool
 DiskOperation::Move(const std::string& tar_name, const std::string& src_name) {
-    // Need to realize...
-    return false;
+    try {
+        boost::filesystem::rename(src_name, tar_name);
+    } catch (boost::filesystem::filesystem_error e) {
+        return false;
+    }
+
+    return true;
 }
 
 }  // namespace storage
