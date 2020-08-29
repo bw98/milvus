@@ -53,6 +53,7 @@ DefaultVectorsFormat::read_vectors_internal(const storage::FSHandlerPtr& fs_ptr,
     fs_ptr->reader_ptr_->close();
 }
 
+/* (Lai Weifeng)  Disk ran well, but it has Bug when we enable s3!!!!!!!!!!!!! */
 void
 DefaultVectorsFormat::read_uids_internal(const storage::FSHandlerPtr& fs_ptr, const std::string& file_path,
                                          std::vector<segment::doc_id_t>& uids) {
@@ -62,8 +63,13 @@ DefaultVectorsFormat::read_uids_internal(const storage::FSHandlerPtr& fs_ptr, co
         throw Exception(SERVER_CANNOT_OPEN_FILE, err_msg);
     }
 
+    int64_t pos = 0;
+    fs_ptr->reader_ptr_->seekg(0);
+
     size_t num_bytes;
     fs_ptr->reader_ptr_->read(&num_bytes, sizeof(size_t));
+    pos += sizeof(num_bytes);
+    fs_ptr->reader_ptr_->seekg(pos);
 
     uids.resize(num_bytes / sizeof(segment::doc_id_t));
     fs_ptr->reader_ptr_->read(uids.data(), num_bytes);
