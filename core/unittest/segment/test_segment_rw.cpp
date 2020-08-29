@@ -46,6 +46,7 @@ class SegmentIndexTest : public DataGen, public SegmentTest {
 
 TEST_F(SegmentIndexTest, SEGMENT_VECTOR_INDEX_RW_TEST) {
     const std::string segment_dir = "/tmp";
+    const std::string index_location = "/tmp/test_index";
 
     {
         milvus::segment::SegmentWriter segment_writer(segment_dir);
@@ -62,30 +63,33 @@ TEST_F(SegmentIndexTest, SEGMENT_VECTOR_INDEX_RW_TEST) {
         EXPECT_EQ(index_->Dim(), dim);
 
         segment_writer.SetVectorIndex(index_);
-        const std::string location = "/tmp/test_index";
-        ASSERT_TRUE(segment_writer.WriteVectorIndex(location).ok());
+        ASSERT_TRUE(segment_writer.WriteVectorIndex(index_location).ok());
     }
 
     {
         milvus::segment::SegmentReader segment_reader(segment_dir);
 
         /* test to read vector index */
-        const std::string location = "/tmp/test_index";
         milvus::segment::VectorIndexPtr index_ = std::make_shared<milvus::segment::VectorIndex>();
-        ASSERT_TRUE(segment_reader.LoadVectorIndex(location, index_).ok());
+        ASSERT_TRUE(segment_reader.LoadVectorIndex(index_location, index_).ok());
     }
 }
 
 TEST_F(SegmentTest, SEGMENT_DELETEDDOCS_RW_TEST) {
     const std::string segment_dir = "/tmp";
 
+    const vector<milvus::segment::offset_t> input_data{1, 2, 3};
+
     {
         milvus::segment::SegmentWriter segment_writer(segment_dir);
 
         /* test to write deleted docs */
         milvus::segment::DeletedDocsPtr deleted_docs_ptr = std::make_shared<milvus::segment::DeletedDocs>();
-        ASSERT_TRUE(segment_writer.WriteDeletedDocs(deleted_docs_ptr).ok());  // write an empty deleted docs
+        deleted_docs_ptr->AddDeletedDoc(input_data.at(0));
+        ASSERT_TRUE(segment_writer.WriteDeletedDocs(deleted_docs_ptr).ok());
         deleted_docs_ptr = std::make_shared<milvus::segment::DeletedDocs>();
+        deleted_docs_ptr->AddDeletedDoc(input_data.at(1));
+        deleted_docs_ptr->AddDeletedDoc(input_data.at(2));
         ASSERT_TRUE(segment_writer.WriteDeletedDocs(deleted_docs_ptr).ok());  // write twice so as to test Move()
     }
 
@@ -97,21 +101,29 @@ TEST_F(SegmentTest, SEGMENT_DELETEDDOCS_RW_TEST) {
         ASSERT_TRUE(segment_reader.LoadDeletedDocs(deleted_docs_ptr).ok());
         size_t deleted_docs_size;
         ASSERT_TRUE(segment_reader.ReadDeletedDocsSize(deleted_docs_size).ok());
+
+        const auto& deleted_docs_vec = deleted_docs_ptr->GetDeletedDocs();
+
+        EXPECT_EQ(deleted_docs_size, input_data.size());
+        EXPECT_EQ(deleted_docs_vec.size(), deleted_docs_size);
+        EXPECT_EQ(deleted_docs_vec.at(0), input_data.at(0));
+        EXPECT_EQ(deleted_docs_vec.at(1), input_data.at(1));
+        EXPECT_EQ(deleted_docs_vec.at(2), input_data.at(2));
     }
 }
 
 TEST_F(SegmentTest, SEGMENT_VECTOR_RW_TEST) {
     const std::string segment_dir = "/tmp";
 
+    const std::string vector_name = "test_vector";
+    const std::vector<uint8_t> vector_data{0, 1};
+    const std::vector<milvus::segment::doc_id_t> vector_uids{1234, 5678};
+
     {
         milvus::segment::SegmentWriter segment_writer(segment_dir);
 
         /* test to write vector */
-        const std::string name = "test_vector";
-        const std::vector<uint8_t> data{0, 1};
-        const std::vector<milvus::segment::doc_id_t> uids{1234, 5678};
-        ASSERT_TRUE(segment_writer.AddVectors(name, data, uids).ok());
-
+        ASSERT_TRUE(segment_writer.AddVectors(vector_name, vector_data, vector_uids).ok());
         ASSERT_TRUE(segment_writer.WriteVectors().ok());
     }
 
@@ -120,9 +132,18 @@ TEST_F(SegmentTest, SEGMENT_VECTOR_RW_TEST) {
 
         /* test to read vector */
         off_t offset = 0;
-        size_t num_bytes = 2 * sizeof(uint8_t);  // size of testing data is 2
+        size_t num_bytes = vector_data.size() * sizeof(uint8_t);
         std::vector<uint8_t> raw_vector;
         ASSERT_TRUE(segment_reader.LoadVectors(offset, num_bytes, raw_vector).ok());
+        std::vector<milvus::segment::doc_id_t> raw_uids;
+        ASSERT_TRUE(segment_reader.LoadUids(raw_uids).ok());
+
+        EXPECT_EQ(raw_vector.size(), vector_data.size());
+        EXPECT_EQ(raw_vector.at(0), vector_data.at(0));
+        EXPECT_EQ(raw_vector.at(1), vector_data.at(1));
+        EXPECT_EQ(raw_uids.size(), vector_uids.size());
+        EXPECT_EQ(raw_uids.at(0), vector_uids.at(0));
+        EXPECT_EQ(raw_uids.at(1), vector_uids.at(1));
     }
 }
 
@@ -131,18 +152,17 @@ TEST_F(SegmentTest, SEGMENT_ATTR_RW_TEST) {
 
     const std::string segment_dir = "/tmp";
 
+    const std::string attr_name = "test_partition";
+    const std::unordered_map<std::string, std::vector<uint8_t>> attr_data{{"test_partition", {0, 1}}};
+    const std::unordered_map<std::string, uint64_t> attr_nbytes{
+        {"test_partition", attr_data.at("test_partition").size() * sizeof(uint8_t)}};
+    const std::vector<milvus::segment::doc_id_t> attr_uids{4321, 8765};
+
     {
         milvus::segment::SegmentWriter segment_writer(segment_dir);
 
         /* test to write attr */
-        std::string name = "test_partition";
-        std::unordered_map<std::string, uint64_t> attr_nbytes;
-        attr_nbytes.insert({"test_partition", 2 * sizeof(uint8_t)});  // size of testing attr data is 2
-        std::unordered_map<std::string, std::vector<uint8_t>> attr_data;
-        attr_data.insert({"test_partition", {0, 1}});
-        std::vector<milvus::segment::doc_id_t> uids{4321, 8765};
-        ASSERT_TRUE(segment_writer.AddAttrs(name, attr_nbytes, attr_data, uids).ok());
-
+        ASSERT_TRUE(segment_writer.AddAttrs(attr_name, attr_nbytes, attr_data, attr_uids).ok());
         ASSERT_TRUE(segment_writer.WriteAttrs().ok());
     }
 
@@ -181,22 +201,21 @@ TEST_F(SegmentTest, SEGMENT_SERIALIZE_TEST) {
 
     const std::string segment_dir = "/tmp";
 
+    const std::string vector_name = "test_vector_222";
+    const std::vector<uint8_t> vector_data{0, 1};
+    const std::vector<milvus::segment::doc_id_t> vector_uids{1234, 5678};
+
+    const std::string attr_name = "test_partition_222";
+    const std::unordered_map<std::string, std::vector<uint8_t>> attr_data{{"test_partition_222", {0, 1}}};
+    const std::unordered_map<std::string, uint64_t> attr_nbytes{
+        {"test_partition_222", attr_data.at("test_partition_222").size() * sizeof(uint8_t)}};
+    const std::vector<milvus::segment::doc_id_t> attr_uids{4321, 8765};
+
     {
         milvus::segment::SegmentWriter segment_writer(segment_dir);
 
-        const std::string vector_name = "test_vector_222";
-        const std::vector<uint8_t> vector_data{0, 1};
-        const std::vector<milvus::segment::doc_id_t> vector_uids{1234, 5678};
         ASSERT_TRUE(segment_writer.AddVectors(vector_name, vector_data, vector_uids).ok());
-
-        std::string attr_name = "test_partition_222";
-        std::unordered_map<std::string, uint64_t> attr_nbytes;
-        attr_nbytes.insert({"test_partition_222", 2 * sizeof(uint8_t)});
-        std::unordered_map<std::string, std::vector<uint8_t>> attr_data;
-        attr_data.insert({"test_partition_222", {0, 1}});
-        std::vector<milvus::segment::doc_id_t> attr_uids{4321, 8765};
         ASSERT_TRUE(segment_writer.AddAttrs(attr_name, attr_nbytes, attr_data, attr_uids).ok());
-
         ASSERT_TRUE(segment_writer.Serialize().ok());
     }
 }
@@ -206,20 +225,20 @@ TEST_F(SegmentTest, SEGMENT_MERGE_TEST) {
 
     const std::string segment_dir_to_merge = "/tmp/dir_to_merge";
 
+    const std::string vector_name = "test_vector";
+    const std::vector<uint8_t> vector_data{0, 1};
+    const std::vector<milvus::segment::doc_id_t> vector_uids{1234, 5678};
+
+    const std::string attr_name = "test_partition";
+    const std::unordered_map<std::string, std::vector<uint8_t>> attr_data{{"test_partition", {0, 1}}};
+    const std::unordered_map<std::string, uint64_t> attr_nbytes{
+        {"test_partition", attr_data.at("test_partition").size() * sizeof(uint8_t)}};
+    const std::vector<milvus::segment::doc_id_t> attr_uids{4321, 8765};
+
     {
         milvus::segment::SegmentWriter segment_writer(segment_dir_to_merge);
 
-        const std::string vector_name = "test_vector";
-        const std::vector<uint8_t> vector_data{0, 1};
-        const std::vector<milvus::segment::doc_id_t> vector_uids{1234, 5678};
         ASSERT_TRUE(segment_writer.AddVectors(vector_name, vector_data, vector_uids).ok());
-
-        std::string attr_name = "test_partition";
-        std::unordered_map<std::string, uint64_t> attr_nbytes;
-        attr_nbytes.insert({"test_partition", 2 * sizeof(uint8_t)});
-        std::unordered_map<std::string, std::vector<uint8_t>> attr_data;
-        attr_data.insert({"test_partition", {0, 1}});
-        std::vector<milvus::segment::doc_id_t> attr_uids{4321, 8765};
         ASSERT_TRUE(segment_writer.AddAttrs(attr_name, attr_nbytes, attr_data, attr_uids).ok());
 
         ASSERT_TRUE(segment_writer.Serialize().ok());
